@@ -1,0 +1,20 @@
+path: /DeepLearning/_athena_tests/datasets/rectangle2/split_yolo_hbb_dataset_unit
+train: images/train # train images (relative to 'path') 128 images
+val: images/val # val images (relative to 'path') 128 images
+
+names:
+  0: RING  
+  1: DUST
+  2: SCRATCH
+  3: FOLD
+  4: DAMAGE
+  5: LINE
+  6: BOLD
+  7: BURR
+  8: BUBBLE
+  9: TIP
+  10: REACT
+
+
+
+
