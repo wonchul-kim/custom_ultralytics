@@ -22,7 +22,7 @@ from torch import distributed as dist
 from torch import nn, optim
 
 from ultralytics.cfg import get_cfg, get_save_dir
-from ultralytics.data.utils import check_cls_dataset, check_det_dataset
+from ultralytics.data.utils import check_cls_dataset, check_det_dataset, check_det_dataset_v2
 from ultralytics.nn.tasks import attempt_load_one_weight, attempt_load_weights
 from ultralytics.utils import (
     DEFAULT_CFG,
@@ -130,7 +130,7 @@ class BaseTrainer:
         # Model and Dataset
         self.model = check_model_file_from_stem(self.args.model)  # add suffix, i.e. yolov8n -> yolov8n.pt
         with torch_distributed_zero_first(LOCAL_RANK):  # avoid auto-downloading dataset multiple times
-            self.trainset, self.testset = self.get_dataset()
+            self.trainset, self.testset = self.get_dataset_v2()
         self.ema = None
 
         # Optimization utils init
@@ -560,6 +560,29 @@ class BaseTrainer:
                 "obb",
             }:
                 data = check_det_dataset(self.args.data)
+                if "yaml_file" in data:
+                    self.args.data = data["yaml_file"]  # for validating 'yolo train data=url.zip' usage
+        except Exception as e:
+            raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
+        self.data = data
+        return data["train"], data.get("val") or data.get("test")
+
+    def get_dataset_v2(self):
+        """
+        Get train, val path from data dict if it exists.
+
+        Returns None if data format is not recognized.
+        """
+        try:
+            if self.args.task == "classify":
+                data = check_cls_dataset(self.args.data)
+            elif True if isinstance(self.args.data, dict) else self.args.data.split(".")[-1] in {"yaml", "yml"} or self.args.task in {
+                "detect",
+                "segment",
+                "pose",
+                "obb",
+            }:
+                data = check_det_dataset_v2(self.args.data)
                 if "yaml_file" in data:
                     self.args.data = data["yaml_file"]  # for validating 'yolo train data=url.zip' usage
         except Exception as e:
