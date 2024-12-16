@@ -124,3 +124,8 @@ cfg: # (str, optional) for overriding defaults.yaml
 
 # Tracker settings ------------------------------------------------------------------------------------------------------
 tracker: botsort.yaml # (str) tracker type, choices=[botsort.yaml, bytetrack.yaml]
+
+# custom =================================================================================================================
+cached_dataset: false 
+label_format: yolo
+roi_info: [[]]

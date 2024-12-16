@@ -1,4 +1,7 @@
 from ultralytics import YOLO, settings
+from pathlib import Path
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[1]
 settings.update({'wandb': False})
 
 
@@ -20,5 +23,5 @@ train_results = model.train(
     batch=4,
     
     label_format='labelme',
-    roi_info=[[]]
+    roi_info=[[]],
 )

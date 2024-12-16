@@ -61,9 +61,17 @@ class BaseDataset(Dataset):
         single_cls=False,
         classes=None,
         fraction=1.0,
+        cached_dataset=False,
+        label_format='yolo',
+        roi_info=[[]],
     ):
         """Initialize BaseDataset with given configuration and options."""
         super().__init__()
+        # custom ============================================================
+        self.cached_dataset = cached_dataset
+        self.label_format = label_format
+        self.roi_info = roi_info
+        # ===================================================================
         self.img_path = img_path
         self.imgsz = imgsz
         self.augment = augment
