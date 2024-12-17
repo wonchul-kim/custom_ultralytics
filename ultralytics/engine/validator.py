@@ -29,7 +29,7 @@ import numpy as np
 import torch
 
 from ultralytics.cfg import get_cfg, get_save_dir
-from ultralytics.data.utils import check_cls_dataset, check_det_dataset
+from ultralytics.data.utils import check_cls_dataset, check_det_dataset, check_det_dataset_v2
 from ultralytics.nn.autobackend import AutoBackend
 from ultralytics.utils import LOGGER, TQDM, callbacks, colorstr, emojis
 from ultralytics.utils.checks import check_imgsz
@@ -141,8 +141,10 @@ class BaseValidator:
                 self.args.batch = model.metadata.get("batch", 1)  # export.py models default to batch-size 1
                 LOGGER.info(f"Setting batch={self.args.batch} input of shape ({self.args.batch}, 3, {imgsz}, {imgsz})")
 
-            if str(self.args.data).split(".")[-1] in {"yaml", "yml"}:
-                self.data = check_det_dataset(self.args.data)
+            # if str(self.args.data).split(".")[-1] in {"yaml", "yml"}:
+                # self.data = check_det_dataset(self.args.data)
+            if isinstance(self.args.data, dict) or str(self.args.data).split(".")[-1] in {"yaml", "yml"}:
+                self.data = check_det_dataset_v2(self.args.data)
             elif self.args.task == "classify":
                 self.data = check_cls_dataset(self.args.data, split=self.args.split)
             else:

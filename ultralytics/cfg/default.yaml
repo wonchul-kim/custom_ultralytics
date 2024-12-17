@@ -129,3 +129,4 @@ tracker: botsort.yaml # (str) tracker type, choices=[botsort.yaml, bytetrack.yam
 cached_dataset: false 
 label_format: yolo
 roi_info: [[]]
+external: null
