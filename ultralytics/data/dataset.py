@@ -262,7 +262,8 @@ class YOLODataset(BaseDataset):
                 LOGGER.info("\n".join(cache["msgs"]))  # display warnings
 
         # Read cache
-        [cache.pop(k) for k in ("hash", "version", "msgs")]  # remove items
+        # [cache.pop(k) for k in ("hash", "version", "msgs")]  # remove items
+        [cache.pop(k) for k in ("hash", "msgs")]  # remove items
         labels = cache["labels"]
         if not labels:
             LOGGER.warning(f"WARNING ⚠️ No images found in {cache_path}, training may not work correctly. {HELP_URL}")
