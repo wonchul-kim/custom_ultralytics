@@ -128,7 +128,7 @@ class YOLODataset(BaseDataset):
         x["hash"] = get_hash(self.label_files + self.im_files)
         x["results"] = nf, nm, ne, nc, len(self.im_files)
         x["msgs"] = msgs  # warnings
-        save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
+        # save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
         return x
 
     def cache_labelme_labels(self, path=Path("./labels.cache")):
@@ -226,7 +226,7 @@ class YOLODataset(BaseDataset):
         x["hash"] = get_hash(self.label_files + self.im_files)
         x["results"] = nf, nm, ne, nc, len(self.im_files)
         x["msgs"] = msgs  # warnings
-        save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
+        # save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
         try:
             np.save(path, x)  # save cache for next time
             path.with_suffix(".cache.npy").rename(path)  # remove .npy suffix
@@ -626,5 +626,5 @@ class ClassificationDataset:
             x["hash"] = get_hash([x[0] for x in self.samples])
             x["results"] = nf, nc, len(samples), samples
             x["msgs"] = msgs  # warnings
-            save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
+            # save_dataset_cache_file(self.prefix, path, x, DATASET_CACHE_VERSION)
             return samples
