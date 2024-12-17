@@ -32,7 +32,8 @@ try:
         # packages=['athena'] + [str(x) for x in Path('athena').rglob('*/') if x.is_dir() and '__' not in str(x)],
         packages=find_packages(exclude=[]),
         package_data={
-            '': ['*.yaml', '*.json'], },
+            # '': ['*.yaml', '*.json'], },
+            '': ["**/*.yaml", '*.json'], },
         include_package_data=True,
         install_requires=parse_requirements(PARENT / 'requirements.txt') + ["nvidia-ml-py3"],
     )
@@ -46,7 +47,7 @@ except:
         # packages=['athena'] + [str(x) for x in Path('athena').rglob('*/') if x.is_dir() and '__' not in str(x)],
         packages=find_packages(exclude=[]),
         package_data={
-            '': ['*.yaml', '*.json'], },
+            '': ["**/*.yaml", '*.json'], },
         include_package_data=True,
         # install_requires=["nvidia-ml-py3"],
         install_requires=parse_requirements(PARENT / 'requirements.txt') + ["nvidia-ml-py3"],
