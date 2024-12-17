@@ -173,6 +173,265 @@ def verify_image_label(args):
         return [None, None, None, None, None, nm, nf, ne, nc, msg]
 
 
+def verify_labelme(args):
+    import os.path as osp
+    def xyxy2xywh(imgsz, xyxy):
+
+        if not len(imgsz) >= 2:
+            raise RuntimeError(
+                f"imgsz should be [height, width, channel] or [height, width]"
+            )
+        elif imgsz[0] <= 3:
+            raise RuntimeError(
+                f"imgsz should be [height, width, channel] or [height, width]"
+            )
+
+        if isinstance(xyxy, list):
+            x1, y1, x2, y2 = xyxy[0], xyxy[1], xyxy[2], xyxy[3]
+        else:
+            raise RuntimeError(f"xyxy must be list such as [x1, y1, x2, y2]")
+
+        def sorting(l1, l2):
+            if l1 > l2:
+                lmax, lmin = l1, l2
+                return lmax, lmin
+            else:
+                lmax, lmin = l2, l1
+                return lmax, lmin
+
+        xmax, xmin = sorting(x1, x2)
+        ymax, ymin = sorting(y1, y2)
+
+        dw = 1.0 / imgsz[1]
+        dh = 1.0 / imgsz[0]
+
+        x = (xmin + xmax) / 2.0
+        y = (ymin + ymax) / 2.0
+        w = xmax - xmin
+        h = ymax - ymin
+
+        x = x * dw
+        w = w * dw
+        y = y * dh
+        h = h * dh
+
+        return [x, y, w, h]
+    im_file, lb_file, prefix, class2label, roi, roi_from_json = args
+    nm, nf, ne, nc, msg, segments = (
+        0,
+        0,
+        0,
+        0,
+        "",
+        [],
+    )  # number (missing, found, empty, corrupt), message, segments
+    try:
+        # verify images
+        im = Image.open(im_file)
+        # print(im)
+        im.verify()  # PIL verify
+        _shape = exif_size(im)  # image size
+        if roi:
+            rois = [roi]
+        else:
+            rois = [[0, 0, _shape[0], _shape[1]]]
+
+        if roi_from_json:
+            assert osp.exists(lb_file), RuntimeError(
+                f"There is no such json-file when roi_from_json is {roi_from_json}: {lb_file}"
+            )
+
+            with open(lb_file) as f:
+                _json = json.load(f)
+                if roi_from_json and "rois" in _json.keys() and len(_json["rois"]) != 0:
+                    rois = _json["rois"]
+
+        (im_file_list, l_list, shape_list, roi_list, segments_list, nm_list, nf_list, ne_list, nc_list, msg_list) = ([], [], [], [], [], [], [], [], [], [])
+        for roi in rois:
+            if roi is not None:
+                shape = (roi[2] - roi[0], roi[3] - roi[1])
+            else:
+                shape = _shape
+
+            assert (shape[0] > 9) & (shape[1] > 9), f"image size {shape} <10 pixels"
+            assert im.format.lower() in IMG_FORMATS, f"invalid image format {im.format}"
+            if im.format.lower() in ("jpg", "jpeg"):
+                with open(im_file, "rb") as f:
+                    f.seek(-2, 2)
+                    if f.read() != b"\xff\xd9":  # corrupt JPEG
+                        ImageOps.exif_transpose(Image.open(im_file)).save(
+                            im_file, "JPEG", subsampling=0, quality=100
+                        )
+                        msg = f"{prefix}WARNING: {im_file}: corrupt JPEG restored and saved"
+
+            # verify labels
+            if os.path.isfile(lb_file):
+                nf = 1  # label found
+                with open(lb_file) as f:
+                    ann = json.load(f)
+                l = []
+
+                if len(ann["shapes"]) != 0:
+                    for _shape in ann["shapes"]:
+                        shape_type = str(_shape["shape_type"])
+                        if _shape["label"] in class2label.keys():
+                            label = class2label[_shape["label"]]
+                            xyxy = []
+                            if shape_type.lower() == "rectangle":
+                                for point in _shape["points"]:
+                                    if roi == None:
+                                        xyxy.append(point[0])
+                                        xyxy.append(point[1])
+                                    else:
+                                        if point[0] >= roi[0] and point[0] <= roi[2]:
+                                            xyxy.append(point[0] - roi[0])
+                                        elif point[0] < roi[0]:
+                                            xyxy.append(0)
+                                        elif point[0] > roi[2]:
+                                            xyxy.append(roi[2] - roi[0])
+                                        else:
+                                            raise RuntimeError(
+                                                f"Not considered x: point is {point} and roi is {roi}"
+                                            )
+
+                                        if point[1] >= roi[1] and point[1] <= roi[3]:
+                                            xyxy.append(point[1] - roi[1])
+                                        elif point[1] < roi[1]:
+                                            xyxy.append(0)
+                                        elif point[1] > roi[3]:
+                                            xyxy.append(roi[3] - roi[1])
+                                        else:
+                                            raise RuntimeError(
+                                                f"Not considered y: point is {point} and roi is {roi}"
+                                            )
+
+                                if len(xyxy) > 4:
+                                    raise RuntimeError(
+                                        f"shape type is rectangle, but there are more than 4 points"
+                                    )
+                            elif (
+                                shape_type.lower() == "polygon"
+                                or shape_type.lower() == "watershed"
+                                or shape_type.lower() == "rotatedrect"
+                            ):
+                                xs, ys = [], []
+                                if (len(_shape["points"]) == 0) or (
+                                    len(_shape["points"]) > 0
+                                    and len(_shape["points"]) <= 2
+                                ):
+                                    continue
+                                for point in _shape["points"]:
+                                    if roi == None:
+                                        xs.append(point[0])
+                                        ys.append(point[1])
+                                    else:
+                                        if point[0] >= roi[0] and point[0] <= roi[2]:
+                                            xs.append(point[0] - roi[0])
+                                        elif point[0] < roi[0]:
+                                            xs.append(0)
+                                        elif point[0] > roi[2]:
+                                            xs.append(roi[2] - roi[0])
+                                        else:
+                                            raise RuntimeError(
+                                                f"Not considered x: point is {point} and roi is {roi}"
+                                            )
+
+                                        if point[1] >= roi[1] and point[1] <= roi[3]:
+                                            ys.append(point[1] - roi[1])
+                                        elif point[1] < roi[1]:
+                                            ys.append(0)
+                                        elif point[1] > roi[3]:
+                                            ys.append(roi[3] - roi[1])
+                                        else:
+                                            raise RuntimeError(
+                                                f"Not considered y: point is {point} and roi is {roi}"
+                                            )
+                                xyxy.append(np.max(xs))
+                                xyxy.append(np.max(ys))
+                                xyxy.append(np.min(xs))
+                                xyxy.append(np.min(ys))
+                            elif shape_type == "point":
+                                continue
+                            else:
+                                raise RuntimeError(
+                                    f"There is no such shape type: {shape_type} for {lb_file}"
+                                )
+
+                            if roi == None:
+                                xywh = xyxy2xywh((im.size[1], im.size[0]), xyxy)
+                            else:
+                                xywh = xyxy2xywh(
+                                    (roi[3] - roi[1], roi[2] - roi[0]), xyxy
+                                )
+
+                            l.append([label, xywh[0], xywh[1], xywh[2], xywh[3]])
+                            # l = [x.split() for x in f.read().strip().splitlines() if len(x)]
+                        else:
+                            continue
+
+                    if any([len(x) > 8 for x in l]):  # is segment
+                        classes = np.array([x[0] for x in l], dtype=np.float32)
+                        segments = [
+                            np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in l
+                        ]  # (cls, xy1...)
+                        l = np.concatenate(
+                            (classes.reshape(-1, 1), segments2boxes(segments)), 1
+                        )  # (cls, xywh)
+                l = np.array(l, dtype=np.float32)
+                nl = len(l)
+
+                if nl:
+                    assert (
+                        l.shape[1] == 5
+                    ), f"labels require 5 columns, {l.shape[1]} columns detected"
+                    assert (l >= 0).all(), f"negative label values {l[l < 0]}"
+                    assert (
+                        l[:, 1:] <= 1
+                    ).all(), f"non-normalized or out of bounds coordinates {l[:, 1:][l[:, 1:] > 1]}"
+                    _, i = np.unique(l, axis=0, return_index=True)
+                    if len(i) < nl:  # duplicate row check
+                        l = l[i]  # remove duplicates
+                        if segments:
+                            segments = segments[i]
+                        msg = f"{prefix}WARNING: {im_file}: {nl - len(i)} duplicate labels removed"
+                else:
+                    ne = 1  # label empty
+                    l = np.zeros((0, 5), dtype=np.float32)
+            else:
+                nm = 1  # label missing
+                l = np.zeros((0, 5), dtype=np.float32)
+
+            im_file_list.append(im_file), l_list.append(l), shape_list.append(
+                shape
+            ), roi_list.append(roi), segments_list.append(segments), nm_list.append(
+                nm
+            ), nf_list.append(
+                nf
+            ), ne_list.append(
+                ne
+            ), nc_list.append(
+                nc
+            ), msg_list.append(
+                msg
+            )
+
+        return (
+            im_file_list,
+            l_list,
+            shape_list,
+            roi_list,
+            segments_list,
+            nm_list,
+            nf_list,
+            ne_list,
+            nc_list,
+            msg_list,
+        )
+    except Exception as e:
+        nc = 1
+        msg = f"{prefix}WARNING: {im_file}: ignoring corrupt image/label: {e}"
+        return [[None], [None], [None], [None], [None], [nm], [nf], [ne], [nc], [msg]]
+
 def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
     """
     Convert a list of polygons to a binary mask of the specified image size.
