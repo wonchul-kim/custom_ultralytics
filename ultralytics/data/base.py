@@ -156,7 +156,7 @@ class BaseDataset(Dataset):
             if self.single_cls:
                 self.labels[i]["cls"][:, 0] = 0
 
-    def load_image(self, i, rect_mode=True):
+    def load_image(self, i, rect_mode=True, roi=[]):
         """Loads 1 image from dataset index 'i', returns (im, resized hw)."""
         im, f, fn = self.ims[i], self.im_files[i], self.npy_files[i]
         if im is None:  # not cached in RAM
@@ -171,6 +171,11 @@ class BaseDataset(Dataset):
                 im = cv2.imread(f)  # BGR
             if im is None:
                 raise FileNotFoundError(f"Image Not Found {f}")
+
+            # custom =================================================================================
+            if len(roi) != 0:
+                im = im[roi[1]:roi[3], roi[0]:roi[2], :]
+            # ========================================================================================
 
             h0, w0 = im.shape[:2]  # orig hw
             if rect_mode:  # resize long side to imgsz while maintaining aspect ratio
@@ -299,7 +304,7 @@ class BaseDataset(Dataset):
         """Get and return label information from the dataset."""
         label = deepcopy(self.labels[index])  # requires deepcopy() https://github.com/ultralytics/ultralytics/pull/1948
         label.pop("shape", None)  # shape is for rect, remove it
-        label["img"], label["ori_shape"], label["resized_shape"] = self.load_image(index)
+        label["img"], label["ori_shape"], label["resized_shape"] = self.load_image(index, roi=label.pop('roi'))
         label["ratio_pad"] = (
             label["resized_shape"][0] / label["ori_shape"][0],
             label["resized_shape"][1] / label["ori_shape"][1],

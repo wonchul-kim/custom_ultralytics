@@ -166,10 +166,10 @@ class YOLODataset(BaseDataset):
                             total=len(self.im_files),
                         )
                     )
-                    # print(">>>>>>>>>>>>>> ", _roi, len(self.im_files), len(self.label_files))
-                    # for _img_files, _label_files, _prefix, _class2label, __roi, _roi_from_json in zip(self.im_files, self.label_files, repeat(self.prefix), repeat(class2label), repeat(_roi), repeat(False)):
-                    #     args = (_img_files, _label_files, _prefix, _class2label, __roi, _roi_from_json)
-                    #     __labels = verify_labelme(args)
+                    print(">>>>>>>>>>>>>> ", _roi, len(self.im_files), len(self.label_files))
+                    for _img_files, _label_files, _prefix, _class2label, __roi, _roi_from_json in zip(self.im_files, self.label_files, repeat(self.prefix), repeat(class2label), repeat(_roi), repeat(False)):
+                        args = (_img_files, _label_files, _prefix, _class2label, __roi, _roi_from_json)
+                        __labels = verify_labelme(args)
             else:
                 desc = f"{self.prefix}Scanning '{path.parent / path.stem}' images and labels..."
                 pbar_list.append(
@@ -241,17 +241,17 @@ class YOLODataset(BaseDataset):
         """Returns dictionary of labels for YOLO training."""
         self.label_files = img2label_paths(self.im_files, label_format=self.label_format)
         cache_path = Path(self.label_files[0]).parent.with_suffix(".cache")
-        try:
-            cache, exists = load_dataset_cache_file(cache_path), True  # attempt to load a *.cache file
-            assert cache["version"] == DATASET_CACHE_VERSION  # matches current version
-            assert cache["hash"] == get_hash(self.label_files + self.im_files)  # identical hash
-        except (FileNotFoundError, AssertionError, AttributeError):
-            if self.label_format == 'yolo':
-                cache, exists = self.cache_labels(cache_path), False  # run cache ops
-            elif self.label_format == 'labelme':
-                cache, exists = self.cache_labelme_labels(cache_path), False  # run cache ops
-            else:
-                raise NotImplementedError(f"NOT consider ({self.label_format}) for img2label_paths")
+        # try:
+        #     cache, exists = load_dataset_cache_file(cache_path), True  # attempt to load a *.cache file
+        #     assert cache["version"] == DATASET_CACHE_VERSION  # matches current version
+        #     assert cache["hash"] == get_hash(self.label_files + self.im_files)  # identical hash
+        # except (FileNotFoundError, AssertionError, AttributeError):
+        if self.label_format == 'yolo':
+            cache, exists = self.cache_labels(cache_path), False  # run cache ops
+        elif self.label_format == 'labelme':
+            cache, exists = self.cache_labelme_labels(cache_path), False  # run cache ops
+        else:
+            raise NotImplementedError(f"NOT consider ({self.label_format}) for img2label_paths")
 
         # Display cache
         nf, nm, ne, nc, n = cache.pop("results")  # found, missing, empty, corrupt, total

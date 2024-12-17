@@ -23,5 +23,5 @@ train_results = model.train(
     batch=4,
     
     label_format='labelme',
-    roi_info=[[]],
+    roi_info=[[300, 300, 800, 800]],
 )
