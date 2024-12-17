@@ -9,7 +9,8 @@ PARENT = FILE.parent
 def get_version():
     file = PARENT / 'ultralytics/__init__.py'
     
-    return re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', file.read_text(encoding='utf-8'), re.M)[1]
+    # return re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', file.read_text(encoding='utf-8'), re.M)[1]
+    return '0.0.0'
 
 def parse_requirements(file_path: Path):
     requirements = []
@@ -24,7 +25,7 @@ def parse_requirements(file_path: Path):
 try:
     setup(
         name='ultralytics',
-        version='{{VERSION_PLACEHOLDER}}',
+        version=get_version(),
         python_requires='>=3.9',
         description=('Template for Python Athena'),
         long_description_content_type='text/markdown',
