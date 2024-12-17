@@ -130,3 +130,4 @@ cached_dataset: false
 label_format: yolo
 roi_info: [[]]
 external: null
+debug_dataset_ratio: 0.25

@@ -66,7 +66,7 @@ class BaseValidator:
         callbacks (dict): Dictionary to store various callback functions.
     """
 
-    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None):
+    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None, external=None):
         """
         Initializes a BaseValidator instance.
 
@@ -77,6 +77,10 @@ class BaseValidator:
             args (SimpleNamespace): Configuration for the validator.
             _callbacks (dict): Dictionary to store various callback functions.
         """
+        # custom =======================================================================================
+        self.external = external
+        # ==============================================================================================
+        
         self.args = get_cfg(overrides=args)
         self.dataloader = dataloader
         self.pbar = pbar
@@ -194,6 +198,9 @@ class BaseValidator:
             if self.args.plots and batch_i < 3:
                 self.plot_val_samples(batch, batch_i)
                 self.plot_predictions(batch, preds, batch_i)
+                
+            if trainer and trainer.epoch != 0 and trainer.epoch%self.external.configs.val.save_img_freq_epoch == 0:
+                self.plot_val(batch, preds, batch_i, trainer.val_dir / f"val_batch{batch_i}_pred.jpg")
 
             self.run_callbacks("on_val_batch_end")
         stats = self.get_stats()

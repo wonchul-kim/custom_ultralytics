@@ -28,9 +28,9 @@ class DetectionValidator(BaseValidator):
         ```
     """
 
-    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None):
+    def __init__(self, dataloader=None, save_dir=None, pbar=None, args=None, _callbacks=None, external=None):
         """Initialize detection model with necessary variables and settings."""
-        super().__init__(dataloader, save_dir, pbar, args, _callbacks)
+        super().__init__(dataloader, save_dir, pbar, args, _callbacks, external)
         self.nt_per_class = None
         self.nt_per_image = None
         self.is_coco = False
@@ -263,6 +263,17 @@ class DetectionValidator(BaseValidator):
             *output_to_target(preds, max_det=self.args.max_det),
             paths=batch["im_file"],
             fname=self.save_dir / f"val_batch{ni}_pred.jpg",
+            names=self.names,
+            on_plot=self.on_plot,
+        )  # pred
+        
+    def plot_val(self, batch, preds, ni, fname):
+        """Plots predicted bounding boxes on input images and saves the result."""
+        plot_images(
+            batch["img"],
+            *output_to_target(preds, max_det=self.args.max_det),
+            paths=batch["im_file"],
+            fname=fname,
             names=self.names,
             on_plot=self.on_plot,
         )  # pred
