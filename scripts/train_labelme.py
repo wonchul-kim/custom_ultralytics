@@ -16,8 +16,8 @@ data={'path': '/DeepLearning/_athena_tests/datasets/rectangle2/split_dataset_uni
 
 train_results = model.train(
     data=data,  
-    epochs=300, 
-    imgsz=640, 
+    epochs=2, 
+    imgsz=1024, 
     device="0,1", 
     lrf=0.001,
     batch=4,

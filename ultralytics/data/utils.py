@@ -249,7 +249,8 @@ def verify_labelme(args):
         (im_file_list, l_list, shape_list, roi_list, segments_list, nm_list, nf_list, ne_list, nc_list, msg_list) = ([], [], [], [], [], [], [], [], [], [])
         for roi in rois:
             if roi is not None:
-                shape = (roi[2] - roi[0], roi[3] - roi[1])
+                # shape = (roi[2] - roi[0], roi[3] - roi[1])
+                shape = (roi[3] - roi[1], roi[2] - roi[0])
             else:
                 shape = _shape
 
