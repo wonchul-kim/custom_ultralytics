@@ -200,7 +200,11 @@ class BaseValidator:
                 self.plot_predictions(batch, preds, batch_i)
                 
             if (trainer and self.external) and (trainer.epoch != 0 and trainer.epoch%self.external.configs.val.save_img_freq_epoch == 0):
-                self.plot_val(batch, preds, batch_i, trainer.val_dir / f"val_batch{batch_i}_pred.jpg")
+                if not trainer.val_dir.exists():
+                    trainer.val_dir.mkdir()
+                if not (trainer.val_dir / str(trainer.epoch)).exists():
+                    (trainer.val_dir / str(trainer.epoch)).mkdir()
+                self.plot_val(batch, preds, batch_i, trainer.val_dir / f"{str(trainer.epoch)}/batch{batch_i}_pred.jpg")
 
             self.run_callbacks("on_val_batch_end")
         stats = self.get_stats()

@@ -268,7 +268,16 @@ class DetectionValidator(BaseValidator):
         )  # pred
         
     def plot_val(self, batch, preds, ni, fname):
-        """Plots predicted bounding boxes on input images and saves the result."""
+        plot_images(
+            batch["img"],
+            batch["batch_idx"],
+            batch["cls"].squeeze(-1),
+            batch["bboxes"],
+            paths=batch["im_file"],
+            fname=str(fname).replace('_pred', '_gt'),
+            names=self.names,
+            on_plot=self.on_plot,
+        )
         plot_images(
             batch["img"],
             *output_to_target(preds, max_det=self.args.max_det),
