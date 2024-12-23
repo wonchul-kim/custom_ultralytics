@@ -735,7 +735,8 @@ class Model(nn.Module):
             "verbose": False,
         }  # method defaults
         args = {**self.overrides, **custom, **kwargs, "mode": "export"}  # highest priority args on the right
-        return Exporter(overrides=args, _callbacks=self.callbacks)(model=self.model)
+        return Exporter(overrides=args, _callbacks=self.callbacks, 
+                                            external=kwargs['external'] if 'external' in kwargs else None)(model=self.model)
 
     def train(
         self,

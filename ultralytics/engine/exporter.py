@@ -157,7 +157,7 @@ class Exporter:
         callbacks (list, optional): List of callback functions. Defaults to None.
     """
 
-    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None, external=None):
         """
         Initializes the Exporter class.
 
@@ -166,6 +166,9 @@ class Exporter:
             overrides (dict, optional): Configuration overrides. Defaults to None.
             _callbacks (dict, optional): Dictionary of callback functions. Defaults to None.
         """
+        # custom ====================================================================================
+        self.external = external
+        # ===========================================================================================
         self.args = get_cfg(cfg, overrides)
         if self.args.format.lower() in {"coreml", "mlmodel"}:  # fix attempt for protobuf<3.20.x errors
             os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"  # must run before TensorBoard callback
@@ -457,7 +460,22 @@ class Exporter:
         LOGGER.info(f"\n{prefix} starting export with onnx {onnx.__version__} opset {opset_version}...")
         f = str(self.file.with_suffix(".onnx"))
 
-        output_names = ["output0", "output1"] if isinstance(self.model, SegmentationModel) else ["output0"]
+        # output_names = ["output0", "output1"] if isinstance(self.model, SegmentationModel) else ["output0"]
+        # custom ===============================================================================================
+        if isinstance(self.model, SegmentationModel):
+            output_names = ["output0", "output1"] 
+        else:
+            if hasattr(self.external.export, 'output_names'):
+                output_names = self.external.export.output_names
+            else:
+                output_names = ['output']
+                
+        if hasattr(self.external.export, 'input_names'):
+            input_names = self.external.export.input_names
+        else:
+            input_names = ['data']
+        # ======================================================================================================
+        
         dynamic = self.args.dynamic
         if dynamic:
             dynamic = {"images": {0: "batch", 2: "height", 3: "width"}}  # shape(1,3,640,640)
@@ -474,7 +492,8 @@ class Exporter:
             verbose=False,
             opset_version=opset_version,
             do_constant_folding=True,  # WARNING: DNN inference with torch>=1.12 may require do_constant_folding=False
-            input_names=["images"],
+            # input_names=["images"],
+            input_names=input_names,
             output_names=output_names,
             dynamic_axes=dynamic or None,
         )

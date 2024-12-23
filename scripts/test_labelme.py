@@ -1,5 +1,4 @@
 from ultralytics import YOLO, settings
-from callbacks.aivdb import *
 settings.update({'wandb': False})
 
 import os
@@ -8,12 +7,12 @@ import glob
 from tqdm import tqdm 
 import numpy as np
 import imgviz
-from vis_hbb import vis_hbb
+# from vis_hbb import vis_hbb
 
-weights_file = "/HDD/weights/yolov11/yolo11n.pt"
-input_dir = '/HDD/datasets/public/coco/test2017'
+weights_file = "/DeepLearning/etc/_athena_tests/recipes/agent/detection/ultralytics/train_unit/yolov11/outputs/DETECTION/2024_12_23_11_34_21/train/weights/last.pt"
+input_dir = '/DeepLearning/_athena_tests/datasets/rectangle2/split_dataset_unit/val'
 # json_dir = '/HDD/datasets/public/coco/test2017'
-json_dir = None
+json_dir = '/DeepLearning/_athena_tests/datasets/rectangle2/split_dataset_unit/val'
 output_dir = f'/HDD/etc/outputs/ultralytics'
 
 if not osp.exists(output_dir):
@@ -26,7 +25,7 @@ line_width = 3
 font_scale = 2
 imgsz = 768
 _classes = ['BOX']
-input_img_ext = 'jpg'
+input_img_ext = 'bmp'
 output_img_ext = 'jpg'
 output_img_size_ratio = 1
 
@@ -63,12 +62,12 @@ for img_file in tqdm(img_files):
         
     color_map = imgviz.label_colormap()[1:len(idx2class) + 1 + 1]
     
-    if compare_gt:
-        _compare = vis_hbb(img_file, idx2xyxys, idx2class, output_dir, color_map, json_dir, 
-                           compare_gt=compare_gt, iou_threshold=iou_threshold, line_width=line_width, font_scale=font_scale)
-        _compare.update({"img_file": img_file})
-        compare.update({filename: _compare})
-    else:
-        vis_hbb(img_file, idx2xyxys, idx2class, output_dir, color_map, json_dir, 
-                compare_gt=compare_gt, iou_threshold=iou_threshold, line_width=line_width, font_scale=font_scale)
+    # if compare_gt:
+    #     _compare = vis_hbb(img_file, idx2xyxys, idx2class, output_dir, color_map, json_dir, 
+    #                        compare_gt=compare_gt, iou_threshold=iou_threshold, line_width=line_width, font_scale=font_scale)
+    #     _compare.update({"img_file": img_file})
+    #     compare.update({filename: _compare})
+    # else:
+    #     vis_hbb(img_file, idx2xyxys, idx2class, output_dir, color_map, json_dir, 
+    #             compare_gt=compare_gt, iou_threshold=iou_threshold, line_width=line_width, font_scale=font_scale)
             
